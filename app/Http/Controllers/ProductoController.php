@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductoResource;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
 use App\Models\Producto;
 use App\Models\Deposito;
+use Illuminate\Support\Facades\DB;
 
 class ProductoController extends Controller
 {
@@ -17,23 +20,26 @@ class ProductoController extends Controller
     public function create()
     {
         $depositos = Deposito::all();
-        return view('productos.create', compact('depositos'));
+        $categorias = Categoria::all();
+        return view('productos.create', compact('depositos', 'categorias'));
     }
 
     public function store(Request $request)
     {
         $producto = new Producto();
         $producto->nombre = $request->nombre;
+        $producto->codigo = $request->codigo;
+        $producto->idCategoria = $request->categoria;
         $producto->descripcion = $request->descripcion;
         $producto->moneda = $request->moneda;
         $producto->precio = $request->precio;
         $producto->habilitado = true;
         $producto->save();
 
-        foreach ($request->depositos as $deposito) {
-            $producto->depositos()->attach($deposito['id'], [
-                'disponible' => $deposito['disponible'],
-                'stock_minimo' => $deposito['stock_minimo']
+        foreach ($request->stock_disponible as $id => $stock) {
+            $producto->depositos()->attach($id, [
+                'disponibles' => $stock,
+                'stock_minimo' => $request->stock_minimo[$id]
             ]);
         }
 
@@ -51,9 +57,12 @@ class ProductoController extends Controller
         return redirect()->route('productos.index')->with('success', 'Producto creado correctamente');
     }
 
-    public function edit($id)
+    public function edit(Producto $producto)
     {
-        $producto = Producto::with(['imagenes', 'depositos'])->find($id);
+
+        $producto = $producto->load(['imagenes', 'depositos']);
+
+        $producto = ProductoResource::make($producto);
         $depositos = Deposito::all();
         return view('productos.edit', compact('producto', 'depositos'));
     }
@@ -70,10 +79,10 @@ class ProductoController extends Controller
 
         $producto->depositos()->detach();
 
-        foreach ($request->depositos as $deposito) {
-            $producto->depositos()->attach($deposito['id'], [
-                'disponible' => $deposito['disponible'],
-                'stock_minimo' => $deposito['stock_minimo']
+        foreach ($request->stock_disponible as $id => $stock) {
+            $producto->depositos()->attach($id, [
+                'disponibles' => $stock,
+                'stock_minimo' => $request->stock_minimo[$id]
             ]);
         }
 
@@ -105,16 +114,34 @@ class ProductoController extends Controller
         $producto = Producto::with(['imagenes', 'depositos'])->where('codigo', $codigo)->firstOrFail();
         return response()->json($producto);
     }
-    
+
     public function stockPorDeposito()
     {
         $depositos = Deposito::with('productos')->get();
         return view('productos.stock_por_deposito', compact('depositos'));
     }
-    
+
     public function stockMinimo()
     {
         $productos = Producto::whereRaw('stock_minimo >= disponible')->get();
         return view('productos.stock_minimo', compact('productos'));
     }
-}    
+
+    public  function search(string $codigo)
+    {
+        $productos = Producto::with(['categoria', 'depositos'])->where('codigo', 'like', "%$codigo%")->get();
+        return ProductoResource::collection($productos);
+    }
+
+    public function stockMinimoReport()
+    {
+        $productos = DB::table('productos_depositos')
+            ->join('productos', 'productos.idProducto', '=', 'productos_depositos.idProducto')
+            ->join('depositos', 'depositos.idDeposito', '=', 'productos_depositos.idDeposito')
+            ->select('productos.nombre', 'depositos.nombre as nombreDeposito', 'productos_depositos.stock_minimo')
+            ->whereColumn('productos_depositos.disponibles', '<', 'productos_depositos.stock_minimo')
+            ->get();
+
+        return view('stock-minimo', compact('productos'));
+    }
+}

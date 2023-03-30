@@ -24,12 +24,28 @@
             <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}">
         </div>
         <div>
+            <label for="codigo">Código:</label>
+            <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}">
+        </div>
+        <div>
+            <label for="categoria">Categoría:</label>
+            <select id="categoria" name="categoria">
+                @foreach ($categorias as $categoria)
+                    <option value="{{ $categoria->idCategoria }}"
+                        {{ old('categoria') === $categoria->idCategoria ? 'selected' : '' }}>{{ $categoria->nombre }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label for="descripcion">Descripción:</label>
             <textarea name="descripcion" id="descripcion">{{ old('descripcion') }}</textarea>
         </div>
         <div>
             <label for="moneda">Moneda:</label>
-            <input type="text" name="moneda" id="moneda" value="{{ old('moneda') }}">
+            <select id="moneda" name="moneda">
+                <option value="ARS">ARS</option>
+            </select>
         </div>
         <div>
             <label for="precio">Precio:</label>
@@ -39,14 +55,22 @@
             <label for="imagen">Imagen:</label>
             <input type="file" name="imagen" id="imagen">
         </div>
-        <div>
-            <label for="stock_deposito1">Stock en Depósito 1:</label>
-            <input type="number" name="stock_deposito1" id="stock_deposito1" value="{{ old('stock_deposito1') }}">
-        </div>
-        <div>
-            <label for="stock_deposito2">Stock en Depósito 2:</label>
-            <input type="number" name="stock_deposito2" id="stock_deposito2" value="{{ old('stock_deposito2') }}">
-        </div>
+        @foreach ($depositos as $deposito)
+            <div>
+                <label for="stock_disponible_{{ $deposito->idDeposito }}">Stock disponible en
+                    ({{ $deposito->nombre }}):</label>
+                <input type="number" name="stock_disponible[{{ $deposito->idDeposito }}]"
+                    id="stock_disponible_{{ $deposito->idDeposito }}"
+                    value="{{ old("stock_disponible[$deposito->idDeposito]") }}">
+            </div>
+            <div>
+                <label for="stock_minimo_{{ $deposito->idDeposito }}">Stock minimo en
+                    ({{ $deposito->nombre }}):</label>
+                <input type="number" name="stock_minimo[{{ $deposito->idDeposito }}]"
+                    id="stock_minimo_{{ $deposito->idDeposito }}"
+                    value="{{ old("stock_minimo[$deposito->idDeposito]") }}">
+            </div>
+        @endforeach
         <button type="submit">Crear</button>
     </form>
 </body>

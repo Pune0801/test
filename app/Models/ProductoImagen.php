@@ -9,8 +9,13 @@ class ProductoImagen extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
     protected $table = 'productos_imagenes';
+    protected $primaryKey = 'idImagen';
+   
+
     protected $fillable = ['idProducto', 'path', 'por_defecto'];
+
 
     public function producto()
     {
