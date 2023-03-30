@@ -38,7 +38,7 @@ Este es un proyecto de ejemplo de Laravel que incluye:
 
 ## Aclaraciones
 
-- Como se pedia desarrollar una Api Rest para Producto por código y no existía dicho campo en la tabla producto se agregó el campo codigo para acceder a esta información.
+- Como se pide desarrollar una Api Rest para consultar un producto por código y no existía dicho campo en la tabla producto se agregó el campo codigo para acceder a esta información.
 
 
 ## Autor
